@@ -10,11 +10,10 @@ const userSchema = new Schema({
     },
     lastName:{
         type:String,
-        required:true,
         minLength:3,
         maxLength:20
     },
-    email:{
+    emailId:{
         type:String,
         required:true,
         unique:true,
@@ -34,6 +33,10 @@ const userSchema = new Schema({
     },
     problemSolved:{
         type:[String],
+    },
+    password:{
+        type:String,
+        required:true
     }
 },{
     timestamps:true
