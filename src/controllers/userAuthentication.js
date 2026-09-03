@@ -2,6 +2,7 @@ const User = require('../models/user');
 const validate = require('../utils/validate');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const redisClient = require('../config/redis');
 
 
 
@@ -24,11 +25,12 @@ const register = async (req, res) => {
 
         // save password in hased form.
         req.body.password = await bcrypt.hash(password, 10);
+        req.body.role = 'user';
 
         const user = await User.create(req.body) // Create a new user in the database using the User model
 
         // create jwt token
-        const token = jwt.sign({ _id: user._id, emailId: user.emailId }, process.env.JWT_KEY, { expiresIn: '1h' });
+        const token = jwt.sign({ _id: user._id, emailId: user.emailId, role: "user" }, process.env.JWT_KEY, { expiresIn: '1h' });
         res.cookie('token', token, { maxAge: 3600000 }); // Set the JWT token in a cookie with a 1-hour expiration time
 
         res.status(201).send("User registered successfully");
@@ -43,6 +45,7 @@ const register = async (req, res) => {
 
 
 const login = async (req, res) => {
+    // console.log("Login request received:", req.body);
 
     try {
         const { emailId, password } = req.body;
@@ -60,12 +63,12 @@ const login = async (req, res) => {
             return res.status(400).send("User not found");
         }
 
-        const isPasswordValid = bcrypt.compare(password, user.password); // Compare the provided password with the hashed password in the database
+        const isPasswordValid = await bcrypt.compare(password, user.password); // Compare the provided password with the hashed password in the database
         if (!isPasswordValid) {
             return res.status(400).send("Invalid Credentials");
         }
 
-        const token = jwt.sign({ _id: user._id, emailId: user.emailId }, process.env.JWT_KEY, { expiresIn: '1h' });
+        const token = jwt.sign({ _id: user._id, emailId: user.emailId, role: user.role }, process.env.JWT_KEY, { expiresIn: '1h' });
         res.cookie('token', token, { maxAge: 3600000 });
         res.status(200).send("User logged in successfully");
 
@@ -75,3 +78,55 @@ const login = async (req, res) => {
         res.status(400).send("Error: " + err);
     }
 }
+
+const logout = async (req, res) => {
+
+    // Validate token(Created a middleware): Done with userMiddleware.js
+    // Add token to Redis blacklist
+    // Clear the cookie
+    try {
+        const { token } = req.cookies;
+        const payload = jwt.decode(token);
+
+        await redisClient.set(`token:${token}`, 'Blocked');
+        await redisClient.expireAt(`token:${token}`, payload.exp);
+
+        res.cookie("token", null, { expires: new Date(Date.now()) });
+        res.send("Logged Out Succesfully");
+    }
+    catch (err) {
+        res.status(503).send("Error: " + err);
+    }
+}
+
+const adminRegister = async (req, res) => {
+    // Logic for admin registration
+
+    try {
+        // validate the data;
+        //   if(req.result.role!='admin')
+        //     throw new Error("Invalid Credentials");  
+        validate(req.body);
+        const { firstName, emailId, password } = req.body;
+
+        req.body.password = await bcrypt.hash(password, 10);
+        // req.body.role = 'admin'; // not using because admin can register both user and admin from this endpoint. So we will take role from the request body. But we will check if the user is admin or not in the middleware.
+
+        const user = await User.create(req.body);
+        const token = jwt.sign({ _id: user._id, emailId: emailId, role: user.role }, process.env.JWT_KEY, { expiresIn: 60 * 60 });
+        res.cookie('token', token, { maxAge: 60 * 60 * 1000 });
+        res.status(201).send("User Registered Successfully");
+    }
+    catch (err) {
+        res.status(400).send("Error: " + err);
+    }
+
+
+}
+
+module.exports = {
+    register,
+    login,
+    logout,
+    adminRegister
+};
