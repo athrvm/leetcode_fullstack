@@ -1,6 +1,6 @@
 const express = require('express');
-
-const problemRouter =  express.Router();
+const adminMiddleware = require('../middlewares/adminMiddleware');
+const problemRouter = express.Router();
 
 // Create
 // fetch
@@ -8,12 +8,12 @@ const problemRouter =  express.Router();
 // delete 
 
 // These three endpoints rquire admin access.
-problemRouter.post("/create",problemCreate);
-problemRouter.patch("/:id", problemUpdate);
-problemRouter.delete("/:id",problemDelete);
+problemRouter.post("/create", adminMiddleware, createProblem);
+problemRouter.patch("/:id", updateProblem);
+problemRouter.delete("/:id", deleteProblem);
 
 
-problemRouter.get("/:id",problemFetch);
+problemRouter.get("/:id", getProblemById);
 problemRouter.get("/", getAllProblem);
-problemRouter.get("/user", solvedProblem);
+problemRouter.get("/user", solvedAllProblembyUser);
 
