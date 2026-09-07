@@ -7,11 +7,13 @@ const main = require('./config/db') // Importing the database connection file
 const redisClient = require('./config/redis') // Importing the redis connection file
 const cookieParser = require('cookie-parser') // cookies come in json format and this middleware is used to parse the cookies into JavaScript objects.
 const authRouter = require('./routes/userAuth');
+const problemRouter = require('./routes/problemCreator');
 
 app.use(express.json()) // Middleware to parse JSON request bodies into JavaScript objects.
 app.use(cookieParser()) // Middleware to parse cookies into JavaScript objects.
 
 app.use('/user', authRouter);
+app.use('/problem', problemRouter);
 
 
 const InitalizeConnection = async () => {
