@@ -6,4 +6,5 @@ node_modules/
 .env.*
 !.env.example
 
-.txt
+rough.txt
+docker_cmd.txt
