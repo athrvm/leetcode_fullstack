@@ -1,4 +1,4 @@
-const moongose = require('mongoose');
+const mongoose = require('mongoose');
 const {Schema} = moongose;
 
 const userSchema = new Schema({
@@ -48,5 +48,19 @@ const userSchema = new Schema({
 
 // After this we will create a mongoose model using the schema defined above. The model will be used to interact with the 'users' collection in the MongoDB database.
 
-const User = moongose.model('user',userSchema); // user will be created with userSchema.
+// Method - 2 deleting submissions. This uses post command.
+userSchema.post('findOneAndDelete', async function (userInfo) { // Execute this when findOneAndDelete is executed 
+    // When user is deleted its info is sent in userInfo as a parameter.
+    if (userInfo) {
+      await mongoose.model('submission').deleteMany({ userId: userInfo._id });
+    }
+});
+// Your Mongoose method                 Middleware
+// findOneAndDelete()          →        findOneAndDelete
+// findOneAndUpdate()          →        findOneAndUpdate
+// findOne()                   →        findOne
+// findByIdAndDelete()         →        findOneAndDelete  ← special
+// findByIdAndUpdate()         →        findOneAndUpdate  ← special
+
+const User = mongoose.model('user',userSchema); // user will be created with userSchema.
 module.exports = User; // Now this can be used in other files by importing it.
