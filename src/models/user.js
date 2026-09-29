@@ -32,7 +32,11 @@ const userSchema = new Schema({
         default:'user'
     },
     problemSolved:{
-        type:[String],
+        type:[{
+            type:Schema.Types.ObjectId,
+            ref:'problem'
+        }],
+        unique:true
     },
     password:{
         type:String,
@@ -44,5 +48,5 @@ const userSchema = new Schema({
 
 // After this we will create a mongoose model using the schema defined above. The model will be used to interact with the 'users' collection in the MongoDB database.
 
-const User = moongose.model('User',userSchema); // user will be created with userSchema.
+const User = moongose.model('user',userSchema); // user will be created with userSchema.
 module.exports = User; // Now this can be used in other files by importing it.
